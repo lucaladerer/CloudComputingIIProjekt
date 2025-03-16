@@ -1,0 +1,28 @@
+.table {
+    position: relative;
+    width: 90vw;
+}
+
+#jokesTable tbody tr:first-child td {
+    background-color: gold !important;
+    color: black;
+}
+
+#jokesTable tbody tr:nth-child(2) td {
+    background-color: silver !important;
+    color: black;
+}
+
+#jokesTable tbody tr:nth-child(3) td {
+    background-color: peru !important;
+    color: black;
+}
+
+#jokesTable tbody td:nth-child(1) {
+    font-weight: bolder;
+    text-align: center;
+}
+
+#jokesTable tbody td:nth-child(3) {
+    text-align: center;
+}
