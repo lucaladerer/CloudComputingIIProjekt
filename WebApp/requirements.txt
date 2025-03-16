@@ -1,5 +1,3 @@
-json
-flask
-flask_pymongo
-pymongo.mongo_client
-pymongo.server_api
+flask==3.1.0
+flask_pymongo==3.0.1
+pymongo==4.11.2

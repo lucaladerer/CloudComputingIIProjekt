@@ -65,19 +65,3 @@ def add_joke():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-##
-
-
-# Create a new client and connect to the server
-
-# Send a ping to confirm a successful connection
-# try:
-#     client.admin.command('ping')
-#     print("Pinged your deployment. You successfully connected to MongoDB!")
-# except Exception as e:
-#     print(e)
-
-##
