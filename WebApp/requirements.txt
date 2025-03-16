@@ -1,0 +1,5 @@
+json
+flask
+flask_pymongo
+pymongo.mongo_client
+pymongo.server_api
