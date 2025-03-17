@@ -25,7 +25,7 @@ provider "azurerm" {
 
 # Create resource group
 resource "azurerm_resource_group" "rg" {
-  name     = "myResourceGroup"
+  name     = "CCII_project_resourcegroup"
   location = "westeurope"
 }
 
@@ -104,8 +104,8 @@ provider "docker" {
 resource "docker_image" "app_image" {
   name = "my_app:latest"
   build {
-    context    = "../WebApp"            # Pfad zum App-Code inklusive Dockerfile
-    dockerfile = "../WebApp/dockerfile"
+    context    = "../../WebApp"            # Pfad zum App-Code inklusive Dockerfile
+    dockerfile = "../../WebApp/dockerfile"
   }
 }
 
