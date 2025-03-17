@@ -115,8 +115,8 @@ resource "docker_container" "app_container" {
   image = docker_image.app_image.image_id
 
   ports {
-    internal = 8080
-    external = 8080
+    internal = 5000
+    external = 5000
   }
 
     env = [

@@ -9,6 +9,7 @@
       shell: |
         python3 - <<EOF
         import os
+        pip3 install pymongo
         from pymongo import MongoClient
         db_password = os.getenv("DB_PASSWORD")
         if not db_password:
