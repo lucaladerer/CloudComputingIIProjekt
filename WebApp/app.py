@@ -1,4 +1,5 @@
 from json import dumps
+import os
 from flask import Flask, current_app, g, jsonify, render_template, request
 from flask_pymongo import PyMongo
 from pymongo.mongo_client import MongoClient
@@ -6,7 +7,11 @@ from pymongo.server_api import ServerApi
 
 app = Flask(__name__)
 
-uri = "mongodb+srv://lucaladerer:VfnMplqnE7iQJemc@ccii.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
+db_password = os.getenv("DB_PASSWORD")
+if not db_password:
+    raise ValueError("DB_PASSWORD ist nicht gesetzt!")
+
+uri = "mongodb+srv://lucaladerer:{db_password}@ccii.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
 #uri = "mongodb+srv://lucaladerer:<db_password>@ccii.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
 client = MongoClient(uri, server_api=ServerApi('1'))
 db = client["CCII"]
