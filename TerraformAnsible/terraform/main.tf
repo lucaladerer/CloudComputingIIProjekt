@@ -79,7 +79,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = file("~./.ssh/keyForCC")
+    public_key = file("~/.ssh/keyForCC.pub")
   }
 
   os_disk {
