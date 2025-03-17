@@ -105,7 +105,7 @@ resource "docker_image" "app_image" {
   name = "my_app:latest"
   build {
     context    = "../../WebApp"            # Pfad zum App-Code inklusive Dockerfile
-    dockerfile = "../../WebApp/dockerfile"
+    dockerfile = "dockerfile"
   }
 }
 
