@@ -1,0 +1,140 @@
+---
+
+
+- name: Initialisiere MongoDB-Datenbank
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Erstelle Datenbank "CCII" und Collection "Jokes", falls nicht vorhanden
+      shell: |
+        python3 - <<EOF
+        import os
+        from pymongo import MongoClient
+        db_password = os.getenv("DB_PASSWORD")
+        if not db_password:
+            raise ValueError("DB_PASSWORD ist nicht gesetzt!")
+        uri = f"mongodb+srv://lucaladerer:{db_password}@ccii.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
+        client = MongoClient(uri)
+        db = client["CCII"]
+        if "Jokes" not in db.list_collection_names():
+            db.create_collection("Jokes")
+        client.close()
+        EOF
+      args:
+        executable: /bin/bash
+      environment:
+        DB_PASSWORD: "VfnMplqnE7iQJemc"  # Kann hier auch dynamisch gesetzt werden
+
+
+
+# - name: Install Prometheus Node Exporter and Prometheus and Grafana
+#   hosts: remote-hosts
+#   become: true
+
+#   tasks:
+#     - name: Install Prometheus Node Exporter
+#       apt:
+#         name: prometheus-node-exporter
+#         state: present
+#         update_cache: yes
+#       notify: restart node exporter
+
+#   handlers:
+#     - name: restart node exporter
+#       systemd:
+#         name: prometheus-node-exporter
+#         state: restarted
+
+# - name: Install and Configure Prometheus and Grafana
+#   hosts: localhost
+#   become: true
+
+#   vars:
+#     prometheus_sysctl:
+#       net.core.somaxconn: 65535
+#       net.ipv4.ip_local_port_range: "1024 65535"
+
+#   tasks:
+#     - name: Download and Install Prometheus
+#       get_url:
+#         url: https://github.com/prometheus/prometheus/releases/download/v2.30.3/prometheus-2.30.3.linux-amd64.tar.gz
+#         dest: /tmp/prometheus.tar.gz
+
+#     - name: Extract Prometheus
+#       unarchive:
+#         src: /tmp/prometheus.tar.gz
+#         dest: /usr/local/bin/
+#         remote_src: true
+#         owner: root
+#         group: root
+#         mode: '0755'
+#         creates: /usr/local/bin/prometheus-2.30.3.linux-amd64/
+
+#     - name: Create directory for query log file
+#       file:
+#         path: /usr/local/bin/prometheus-2.30.3.linux-amd64/data
+#         state: directory
+#       become: yes
+
+#     - name: Change ownership and permissions of query log directory
+#       file:
+#         path: /usr/local/bin/prometheus-2.30.3.linux-amd64/data
+#         owner: root
+#         group: root
+#         mode: '0777'
+#       become: yes
+
+#     - name: Configure Prometheus
+#       template:
+#         src: config_files/prometheus.yml.j2
+#         dest: /usr/local/bin/prometheus-2.30.3.linux-amd64/prometheus.yml
+#         owner: root
+#         group: root
+#         mode: '0644'
+
+#     - name: Create Prometheus service file
+#       template:
+#         src: config_files/prometheus.service.j2
+#         dest: /etc/systemd/system/prometheus.service
+
+#     - name: Reload Systemd daemon
+#       systemd:
+#         daemon_reload: yes
+
+#     - name: Add Grafana GPG key
+#       apt_key:
+#         url: https://packages.grafana.com/gpg.key
+#         state: present
+
+#     - name: Install Grafana via apt
+#       become: true
+#       apt_repository:
+#         repo: "deb https://packages.grafana.com/oss/deb stable main"
+#         state: present
+#         update_cache: yes
+
+#     - name: Install Grafana via apt
+#       apt:
+#         name: grafana
+#         state: present
+
+#     - name: Create Grafana service file
+#       template:
+#         src: config_files/grafana.service.j2
+#         dest: /etc/systemd/system/grafana.service
+
+#     - name: Reload Systemd daemon
+#       systemd:
+#         daemon_reload: yes
+
+#     - name: Enable and start Grafana service
+#       systemd:
+#         name: grafana
+#         state: started
+#         enabled: yes
+
+#     - name: Enable and start Prometheus service
+#       systemd:
+#         name: prometheus
+#         state: started
+#         enabled: yes
