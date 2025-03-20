@@ -50,7 +50,7 @@ resource "azurerm_public_ip" "public_ip" {
   name                = "myPublicIP"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  allocation_method   = "Dynamic"
+  allocation_method   = "Static"
   sku                 = "Basic"
 }
 
@@ -89,6 +89,20 @@ resource "azurerm_network_security_rule" "allow_flask" {
   resource_group_name         = azurerm_resource_group.rg.name
 }
 
+resource "azurerm_network_security_rule" "open_ssh" {
+        name                    = "allow_flask"
+        priority                = 1001
+        direction               = "Inbound"
+        access                  = "Allow"
+        protocol                = "Tcp"
+        source_port_range       = "*"
+        destination_port_range  = "22"
+        source_address_prefix   = "*"
+        destination_address_prefix = "*"
+        network_security_group_name = azurerm_network_security_group.nsg.name
+        resource_group_name     = azurerm_resource_group.rg.name
+}
+
 
 # Create Linux virtual machine
 resource "azurerm_linux_virtual_machine" "vm" {
@@ -117,34 +131,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 }
 
-## Docker
-provider "docker" {
-  host = "unix:///var/run/docker.sock"
-}
-
-# Image aus Deinem Dockerfile bauen
-resource "docker_image" "app_image" {
-  name = "my_app:latest"
-  build {
-    context    = "../../WebApp"            # Pfad zum App-Code inklusive Dockerfile
-    dockerfile = "dockerfile"
-  }
-}
-
-# Container starten
-resource "docker_container" "app_container" {
-  name  = "my_app"
-  image = docker_image.app_image.image_id
-
-  ports {
-    internal = 5000
-    external = 5000
-  }
-
-    env = [
-    "DB_PASSWORD=VfnMplqnE7iQJemc"
-  ]
-}
+## .env
+#DB_PASSWORD = VfnMplqnE7iQJemc
 
 
 # Output the public IP of the VM

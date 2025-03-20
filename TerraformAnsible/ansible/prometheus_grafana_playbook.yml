@@ -1,10 +1,97 @@
 ---
+- name: Python3 und pip installieren
+  hosts: rh01
+  become: yes
+  tasks:
+    - name: Aktualisiere die Paketliste
+      ansible.builtin.apt:
+        update_cache: yes
 
-- name: Installiere pymongo mit pip
-  pip:
-    name: pymongo
-    state: present
-    executable: pip3
+    - name: Installiere Python3
+      ansible.builtin.apt:
+        name: python3
+        state: present
+
+    - name: Installiere python3-pip
+      ansible.builtin.apt:
+        name: python3-pip
+        state: present
+    - name: Installiere das Docker Python SDK
+      ansible.builtin.pip:
+        name: docker
+        executable: pip3
+        state: present
+
+- name: Kopiere WebApp Dateien auf rh01 (copy-Modul)
+  hosts: rh01
+  become: yes
+  tasks:
+    - name: Kopiere den WebApp Ordner
+      ansible.builtin.copy:
+        src: ~/projekt/CloudComputingIIProjekt/WebApp/
+        dest: /webApp/
+        owner: azureuser
+        mode: '0755'
+        recursive: yes
+
+
+- name: Docker installieren und Container starten
+  hosts: rh01
+  become: yes
+  tasks:
+    - name: Docker installieren
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+
+    - name: Docker Service starten und aktivieren
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Baue das Docker-Image für die Flask-App
+      community.docker.docker_image:
+              source: build
+              name: web_app_image
+              tag: latest
+              build:
+                path: /webApp/   # Passe den Pfad an, wo dein Dockerfile und Quellcode liegen
+
+    - name: Starte Docker Container mit Flask-App
+      community.docker.docker_container:
+        name: web_app
+        image: web_app_image:latest
+        state: started
+        ports:
+          - "5000:5000"
+
+
+- name: MongoDB Collection erstellen, falls nicht vorhanden
+  hosts: rh01
+  become: yes
+  tasks:
+    - name: Installiere pymongo via pip
+      ansible.builtin.pip:
+        name: pymongo
+        state: present
+
+    - name: Erstelle Datenbank "CCII" und Collection "Jokes", falls nicht vorhanden
+      command: >
+        python3 - <<'EOF'
+        import os
+        from pymongo import MongoClient
+        db_password = os.getenv("DB_PASSWORD")
+        if not db_password:
+            raise ValueError("DB_PASSWORD ist nicht gesetzt!")
+        uri = f"mongodb+srv://lucaladerer:VfnMplqnE7iQJemc@ccii.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
+        client = MongoClient(uri)
+        db = client["CCII"]
+        if "Jokes" not in db.list_collection_names():
+            db.create_collection("Jokes")
+        client.close()
+        EOF
+
 
 
 - name: Initialisiere MongoDB-Datenbank
@@ -19,11 +106,11 @@
         db_password = os.getenv("DB_PASSWORD")
         if not db_password:
             raise ValueError("DB_PASSWORD ist nicht gesetzt!")
-        uri = f"mongodb+srv://lucaladerer:{db_password}@ccii.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
+        uri = f"mongodb+srv://lucaladerer:VfnMplqnE7iQJemc@ccii.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
         client = MongoClient(uri)
         db = client["CCII"]
         if "Jokes" not in db.list_collection_names():
-            db.create_collection("Jokes")
+            dib.create_collection("Jokes")
         client.close()
         EOF
       args:
