@@ -140,3 +140,27 @@ output "public_ip" {
   value       = azurerm_public_ip.public_ip.ip_address
   description = "Die öffentliche IP-Adresse der VM"
 }
+
+
+# configure inventory
+resource "null_resource" "run_ansible" {
+  provisioner "local-exec" {
+    command = <<EOT
+    cat <<EOF > ../ansible/inventory.ini
+    [remote-hosts]
+    rh01 ANSIBLE_HOST_KEY_CHECKING=False ansible_host=${azurerm_public_ip.public_ip.ip_address} ansible_user=azureuser ansible_ssh_private_key_file=~/.ssh/keyForTerraform1
+    EOT
+  }
+  depends_on = [
+    azurerm_public_ip.public_ip,
+    azurerm_linux_virtual_machine.vm
+  ]
+  
+  # run ansible
+  provisioner "local-exec" {
+      command     = "ansible-playbook -i ../ansible/inventory.ini ../ansible/playbook.yml"
+      working_dir = path.module
+  }
+}
+
+

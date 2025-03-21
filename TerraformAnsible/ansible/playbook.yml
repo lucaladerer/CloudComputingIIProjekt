@@ -2,11 +2,20 @@
 - name: playbook
   hosts: rh01
   become: yes
+  vars:
+    atlas_project_id: "67cb5fc228b465316458be99"       # Bitte anpassen
+    atlas_provider: "AZURE"                     # Oder "AWS", "GCP" etc.
+    atlas_region: "EUROPE_WEST"                  # Region, in der der Cluster erstellt werden soll
+    atlas_instance_size: "M10"                  # Beispiel: M10
+    atlas_disk_size: 10                         # in GB
+    atlas_public_key: "rcncprnf"         # Bitte anpassen
+    atlas_private_key: "f0af8edb-897d-4985-ac86-e7b94a125f99" 
+    DB_PASSWORD: "VfnMplqnE7iQJemc"
   tasks:
     - name: DB_PASSWORD setzen
       ansible.builtin.shell: echo "DB_PASSWORD ist $DB_PASSWORD"
       environment:
-        DB_PASSWORD: "mein_geheimes_passwort"
+        DB_PASSWORD: "VfnMplqnE7iQJemc"
 
 
     - name: Aktualisiere die Paketliste
@@ -68,16 +77,6 @@
             groups=docker
             append=yes
 
-    - name: Starte Docker Container mit Flask-App
-      community.docker.docker_container:
-        name: web_app
-        image: lucaladerer/web_app:latest
-        pull: 1
-        state: started
-        ports:
-          - "5000:5000"
-        env:
-          DB_PASSWORD: "VfnMplqnE7iQJemc"
 
     - name: Installiere pymongo via pip
       ansible.builtin.pip:
@@ -86,60 +85,46 @@
 
 
 
-    # - name: Erstelle MongoDB Atlas Cluster mit generischem Namen
-      # vars:
-      #   atlas_project_id: "67cb5fc228b465316458be99"       # Bitte anpassen
-      #   atlas_provider: "AZURE"                     # Oder "AWS", "GCP" etc.
-      #   atlas_region: "westeurope"                  # Region, in der der Cluster erstellt werden soll
-      #   atlas_instance_size: "M10"                  # Beispiel: M10
-      #   atlas_disk_size: 10                         # in GB
-      #   atlas_public_key: "~/.ssh/keyForTerraform1.pub"         # Bitte anpassen
-      #   atlas_private_key: "~/.ssh/keyForTerraform1"       # Bitte anpassen
-    #   tasks:
-    #     - name: Setze den generischen Cluster-Namen
-    #       set_fact:
-    #         cluster_name: "JokesDB_{{ ansible_host }}"
-    #       # Alternativ, falls du die IP-Adresse der Default-Interface nutzen möchtest:
-    #       # cluster_name: "JokesDB_{{ ansible_default_ipv4.address }}"
 
-    #     - name: Ausgabe des generierten Cluster-Namens
-    #       ansible.builtin.debug:
-    #         msg: "Der Cluster-Name lautet: {{ cluster_name }}"
 
-    #     - name: Erstelle Cluster in MongoDB Atlas
-    #       delegate_to: rh01
-    #       uri:
-    #         url: "https://cloud.mongodb.com/api/atlas/v1.0/groups/{{ atlas_project_id }}/clusters"
-    #         method: POST
-    #         user: "{{ atlas_public_key }}"
-    #         password: "{{ atlas_private_key }}"
-    #         force_basic_auth: yes
-    #         headers:
-    #           Content-Type: "application/json"
-    #         body_format: json
-    #         body: >
-    #           {
-    #             "name": "{{ cluster_name }}",
-    #             "clusterType": "REPLICASET",
-    #             "providerSettings": {
-    #               "providerName": "{{ atlas_provider }}",
-    #               "instanceSizeName": "{{ atlas_instance_size }}",
-    #               "regionName": "{{ atlas_region }}"
-    #             },
-    #             "diskSizeGB": {{ atlas_disk_size }}
-    #           }
-    #         status_code: 201
+
+    - name: Setze den generischen Cluster-Namen
+      set_fact:
+        cluster_name: "CCII"
+      # Alternativ, falls du die IP-Adresse der Default-Interface nutzen möchtest:
+      # cluster_name: "JokesDB_{{ ansible_default_ipv4.address }}"
+
+    # - name: Ausgabe des generierten Cluster-Namens
+    #   ansible.builtin.debug:
+    #     msg: "Der Cluster-Name lautet: {{ cluster_name }}"
+
+    # - name: Erstelle Cluster in MongoDB Atlas
+    #   # delegate_to: localhost
+    #   uri:
+    #     url: "https://cloud.mongodb.com/api/atlas/v1.0/groups/{{ atlas_project_id }}/clusters"
+    #     method: POST
+    #     user: "{{ atlas_public_key }}"
+    #     password: "{{ atlas_private_key }}"
+    #     # Entferne force_basic_auth oder setze es auf false, damit Digest-Auth genutzt wird:
+    #     force_basic_auth: false
+    #     headers:
+    #       Content-Type: "application/json"
+    #     body_format: json
+    #     body: >
+    #       {
+    #         "name": "{{ cluster_name }}",
+    #         "clusterType": "REPLICASET",
+    #         "providerSettings": {
+    #           "providerName": "{{ atlas_provider }}",
+    #           "instanceSizeName": "{{ atlas_instance_size }}",
+    #           "regionName": "{{ atlas_region }}"
+    #         },
+    #         "diskSizeGB": {{ atlas_disk_size }}
+    #       }
+    #     status_code: 201
+
 
     - name: Konfiguriere uneingeschränkten Zugriff (Whitelist 0.0.0.0/0) in Atlas
-      vars:
-        atlas_project_id: "67cb5fc228b465316458be99"       # Bitte anpassen
-        atlas_provider: "AZURE"                     # Oder "AWS", "GCP" etc.
-        atlas_region: "westeurope"                  # Region, in der der Cluster erstellt werden soll
-        atlas_instance_size: "M10"                  # Beispiel: M10
-        atlas_disk_size: 10                         # in GB
-        atlas_public_key: "rcncprnf"         # Bitte anpassen
-        atlas_private_key: "f0af8edb-897d-4985-ac86-e7b94a125f99"    
-      delegate_to: rh01
       uri:
         url: "https://cloud.mongodb.com/api/atlas/v1.0/groups/{{ atlas_project_id }}/accessList"
         method: POST
@@ -158,44 +143,57 @@
           ]
         status_code: 201
 
+    - name: Erstelle Collection in der Datenbank "CCII"
+      shell: |
+        python3 - <<'EOF'
+        import os
+        from pymongo import MongoClient
 
-    # - name: Erstelle Collection "Jokes" in der Datenbank "JokesDB"
-    #   delegate_to: rh01
-    #   shell: |
-    #     python3 - <<'EOF'
-    #     import os
-    #     from pymongo import MongoClient
+        db_password = os.getenv("DB_PASSWORD")
+        if not db_password:
+            raise ValueError("DB_PASSWORD is not set!")
 
-    #     db_password = os.getenv("DB_PASSWORD")
-    #     if not db_password:
-    #         raise ValueError("DB_PASSWORD is not set!")
+        # Hier passt du den Connection-String an!
+        # Beispiel: Falls der Cluster-Hostname deinem generierten Namen entspricht (in Kleinbuchstaben)
+        uri = f"mongodb+srv://lucaladerer:{db_password}@{{ cluster_name | lower }}.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
+        client = MongoClient(uri)
+        # Verwende hier den Datenbanknamen "CCII" (unabhängig vom Cluster-Namen)
+        db = client["CCII"]
 
-    #     # Hier passt du den Connection-String an!
-    #     # Beispiel: Falls der Cluster-Hostname deinem generierten Namen entspricht (in Kleinbuchstaben)
-    #     uri = f"mongodb+srv://lucaladerer:{db_password}@{{ cluster_name | lower }}.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
-    #     client = MongoClient(uri)
-    #     # Verwende hier den Datenbanknamen "JokesDB" (unabhängig vom Cluster-Namen)
-    #     db = client["JokesDB"]
+        if "Jokes_{{ ansible_host }}" not in db.list_collection_names():
+            db.create_collection("Jokes_{{ ansible_host }}")
+            db.create_collection("counters_{{ ansible_host }}")
+            
+            collection = db["counters_{{ ansible_host }}"]
+            collection.insert_one({"_id": "totalRatings", "count": 0})
+            print("Collection 'Jokes_{{ ansible_host }}' und 'counters_{{ ansible_host }}' wurde erstellt.")
+        else:
+            print("Collection 'Jokes_{{ ansible_host }}' existiert bereits.")
 
-    #     if "Jokes" not in db.list_collection_names():
-    #         db.create_collection("Jokes")
-    #         print("Collection 'Jokes' wurde erstellt.")
-    #     else:
-    #         print("Collection 'Jokes' existiert bereits.")
-
-    #     client.close()
-    #     EOF
-    #   args:
-    #     executable: /bin/bash
-    #   environment:
-    #     # Hier wird DB_PASSWORD an das Skript übergeben.
-    #     DB_PASSWORD: "{{ lookup('env','DB_PASSWORD') }}"
-    #   vars:
-    #     # Übergebe den Cluster-Namen als Umgebungsvariable in Python. (Achtung: Ersetze eventuelle Sonderzeichen!)
-    #     cluster_name: "{{ cluster_name }}"
+        client.close()
+        EOF
+      args:
+        executable: /bin/bash
+      environment:
+        # Hier wird DB_PASSWORD an das Skript übergeben.
+        DB_PASSWORD: VfnMplqnE7iQJemc
+      vars:
+        # Übergebe den Cluster-Namen als Umgebungsvariable in Python. (Achtung: Ersetze eventuelle Sonderzeichen!)
+        cluster_name: "{{ cluster_name }}"
 
 
-
+    - name: Starte Docker Container mit Flask-App
+      community.docker.docker_container:
+        name: web_app
+        image: lucaladerer/web_app:latest
+        pull: 1
+        state: started
+        ports:
+          - "5000:5000"
+        env:
+          DB_PASSWORD: VfnMplqnE7iQJemc
+          COLLECTION: Jokes_{{ ansible_host }}
+          COUNTERS_COLLECTION: counters_{{ ansible_host }}
 
 
 
