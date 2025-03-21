@@ -10,9 +10,10 @@ app = Flask(__name__)
 db_password = os.getenv("DB_PASSWORD")
 if not db_password:
     raise ValueError("DB_PASSWORD ist nicht gesetzt!")
+else:
+    print("Successfully received .env for DB_PASSWORD")
 
-uri = "mongodb+srv://lucaladerer:{db_password}@ccii.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
-#uri = "mongodb+srv://lucaladerer:<db_password>@ccii.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
+uri = f"mongodb+srv://lucaladerer:{db_password}@ccii.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
 client = MongoClient(uri, server_api=ServerApi('1'))
 db = client["CCII"]
 collection = db["Jokes"] 

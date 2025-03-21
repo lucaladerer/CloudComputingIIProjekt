@@ -1,0 +1,353 @@
+---
+- name: playbook
+  hosts: rh01
+  become: yes
+  tasks:
+    - name: DB_PASSWORD setzen
+      ansible.builtin.shell: echo "DB_PASSWORD ist $DB_PASSWORD"
+      environment:
+        DB_PASSWORD: "mein_geheimes_passwort"
+
+
+    - name: Aktualisiere die Paketliste
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Installiere Python3
+      ansible.builtin.apt:
+        name: python3
+        state: present
+
+    - name: Installiere python3-pip
+      ansible.builtin.apt:
+        name: python3-pip
+        state: present
+
+    - name: Installiere das Docker Python SDK
+      ansible.builtin.pip:
+        name: docker
+        executable: pip3
+        state: present
+
+    - name: Docker installieren
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+
+    # - name: Docker Service starten und aktivieren
+    #   ansible.builtin.systemd:
+    #     name: docker
+    #     state: started
+    #     enabled: yes
+
+    # - name: /etc/environment --> MongoDB password
+    #   lineinfile:
+
+    #     path: "/etc/environment"
+    #     state: present
+    #     regexp: "DB_PASSWORD="
+    #     line: "DB_PASSWORD=VfnMplqnE7iQJemc"
+
+    #   with_items: "{{ os_environment }}"
+    #   become: yes
+
+
+
+
+
+    # - name: Füge DB_PASSWORD zur /etc/environment hinzu
+    #   ansible.builtin.lineinfile:
+    #     path: /etc/environment
+    #     line: 'DB_PASSWORD="VfnMplqnE7iQJemc"'
+    #     create: yes
+    #     state: present
+
+
+    - name: Adding user to docker group  
+      user: name=azureuser
+            groups=docker
+            append=yes
+
+    - name: Starte Docker Container mit Flask-App
+      community.docker.docker_container:
+        name: web_app
+        image: lucaladerer/web_app:latest
+        pull: 1
+        state: started
+        ports:
+          - "5000:5000"
+        env:
+          DB_PASSWORD: "VfnMplqnE7iQJemc"
+
+    - name: Installiere pymongo via pip
+      ansible.builtin.pip:
+        name: pymongo
+        state: present
+
+
+
+    # - name: Erstelle MongoDB Atlas Cluster mit generischem Namen
+      # vars:
+      #   atlas_project_id: "67cb5fc228b465316458be99"       # Bitte anpassen
+      #   atlas_provider: "AZURE"                     # Oder "AWS", "GCP" etc.
+      #   atlas_region: "westeurope"                  # Region, in der der Cluster erstellt werden soll
+      #   atlas_instance_size: "M10"                  # Beispiel: M10
+      #   atlas_disk_size: 10                         # in GB
+      #   atlas_public_key: "~/.ssh/keyForTerraform1.pub"         # Bitte anpassen
+      #   atlas_private_key: "~/.ssh/keyForTerraform1"       # Bitte anpassen
+    #   tasks:
+    #     - name: Setze den generischen Cluster-Namen
+    #       set_fact:
+    #         cluster_name: "JokesDB_{{ ansible_host }}"
+    #       # Alternativ, falls du die IP-Adresse der Default-Interface nutzen möchtest:
+    #       # cluster_name: "JokesDB_{{ ansible_default_ipv4.address }}"
+
+    #     - name: Ausgabe des generierten Cluster-Namens
+    #       ansible.builtin.debug:
+    #         msg: "Der Cluster-Name lautet: {{ cluster_name }}"
+
+    #     - name: Erstelle Cluster in MongoDB Atlas
+    #       delegate_to: rh01
+    #       uri:
+    #         url: "https://cloud.mongodb.com/api/atlas/v1.0/groups/{{ atlas_project_id }}/clusters"
+    #         method: POST
+    #         user: "{{ atlas_public_key }}"
+    #         password: "{{ atlas_private_key }}"
+    #         force_basic_auth: yes
+    #         headers:
+    #           Content-Type: "application/json"
+    #         body_format: json
+    #         body: >
+    #           {
+    #             "name": "{{ cluster_name }}",
+    #             "clusterType": "REPLICASET",
+    #             "providerSettings": {
+    #               "providerName": "{{ atlas_provider }}",
+    #               "instanceSizeName": "{{ atlas_instance_size }}",
+    #               "regionName": "{{ atlas_region }}"
+    #             },
+    #             "diskSizeGB": {{ atlas_disk_size }}
+    #           }
+    #         status_code: 201
+
+    - name: Konfiguriere uneingeschränkten Zugriff (Whitelist 0.0.0.0/0) in Atlas
+      vars:
+        atlas_project_id: "67cb5fc228b465316458be99"       # Bitte anpassen
+        atlas_provider: "AZURE"                     # Oder "AWS", "GCP" etc.
+        atlas_region: "westeurope"                  # Region, in der der Cluster erstellt werden soll
+        atlas_instance_size: "M10"                  # Beispiel: M10
+        atlas_disk_size: 10                         # in GB
+        atlas_public_key: "rcncprnf"         # Bitte anpassen
+        atlas_private_key: "f0af8edb-897d-4985-ac86-e7b94a125f99"    
+      delegate_to: rh01
+      uri:
+        url: "https://cloud.mongodb.com/api/atlas/v1.0/groups/{{ atlas_project_id }}/accessList"
+        method: POST
+        user: "{{ atlas_public_key }}"
+        password: "{{ atlas_private_key }}"
+        force_basic_auth: no
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body: >
+          [
+            {
+              "ipAddress": "0.0.0.0/0",
+              "comment": "Allow all access"
+            }
+          ]
+        status_code: 201
+
+
+    # - name: Erstelle Collection "Jokes" in der Datenbank "JokesDB"
+    #   delegate_to: rh01
+    #   shell: |
+    #     python3 - <<'EOF'
+    #     import os
+    #     from pymongo import MongoClient
+
+    #     db_password = os.getenv("DB_PASSWORD")
+    #     if not db_password:
+    #         raise ValueError("DB_PASSWORD is not set!")
+
+    #     # Hier passt du den Connection-String an!
+    #     # Beispiel: Falls der Cluster-Hostname deinem generierten Namen entspricht (in Kleinbuchstaben)
+    #     uri = f"mongodb+srv://lucaladerer:{db_password}@{{ cluster_name | lower }}.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
+    #     client = MongoClient(uri)
+    #     # Verwende hier den Datenbanknamen "JokesDB" (unabhängig vom Cluster-Namen)
+    #     db = client["JokesDB"]
+
+    #     if "Jokes" not in db.list_collection_names():
+    #         db.create_collection("Jokes")
+    #         print("Collection 'Jokes' wurde erstellt.")
+    #     else:
+    #         print("Collection 'Jokes' existiert bereits.")
+
+    #     client.close()
+    #     EOF
+    #   args:
+    #     executable: /bin/bash
+    #   environment:
+    #     # Hier wird DB_PASSWORD an das Skript übergeben.
+    #     DB_PASSWORD: "{{ lookup('env','DB_PASSWORD') }}"
+    #   vars:
+    #     # Übergebe den Cluster-Namen als Umgebungsvariable in Python. (Achtung: Ersetze eventuelle Sonderzeichen!)
+    #     cluster_name: "{{ cluster_name }}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# - name: Install Prometheus Node Exporter and Prometheus and Grafana
+#   hosts: remote-hosts
+#   become: true
+
+#   tasks:
+#     - name: Install Prometheus Node Exporter
+#       apt:
+#         name: prometheus-node-exporter
+#         state: present
+#         update_cache: yes
+#       notify: restart node exporter
+
+#   handlers:
+#     - name: restart node exporter
+#       systemd:
+#         name: prometheus-node-exporter
+#         state: restarted
+
+# - name: Install and Configure Prometheus and Grafana
+#   hosts: rh01
+#   become: true
+
+#   vars:
+#     prometheus_sysctl:
+#       net.core.somaxconn: 65535
+#       net.ipv4.ip_local_port_range: "1024 65535"
+
+#   tasks:
+#     - name: Download and Install Prometheus
+#       get_url:
+#         url: https://github.com/prometheus/prometheus/releases/download/v2.30.3/prometheus-2.30.3.linux-amd64.tar.gz
+#         dest: /tmp/prometheus.tar.gz
+
+#     - name: Extract Prometheus
+#       unarchive:
+#         src: /tmp/prometheus.tar.gz
+#         dest: /usr/local/bin/
+#         remote_src: true
+#         owner: root
+#         group: root
+#         mode: '0755'
+#         creates: /usr/local/bin/prometheus-2.30.3.linux-amd64/
+
+#     - name: Create directory for query log file
+#       file:
+#         path: /usr/local/bin/prometheus-2.30.3.linux-amd64/data
+#         state: directory
+#       become: yes
+
+#     - name: Change ownership and permissions of query log directory
+#       file:
+#         path: /usr/local/bin/prometheus-2.30.3.linux-amd64/data
+#         owner: root
+#         group: root
+#         mode: '0777'
+#       become: yes
+
+#     - name: Configure Prometheus
+#       template:
+#         src: config_files/prometheus.yml.j2
+#         dest: /usr/local/bin/prometheus-2.30.3.linux-amd64/prometheus.yml
+#         owner: root
+#         group: root
+#         mode: '0644'
+
+#     - name: Create Prometheus service file
+#       template:
+#         src: config_files/prometheus.service.j2
+#         dest: /etc/systemd/system/prometheus.service
+
+#     - name: Reload Systemd daemon
+#       systemd:
+#         daemon_reload: yes
+
+#     - name: Add Grafana GPG key
+#       apt_key:
+#         url: https://packages.grafana.com/gpg.key
+#         state: present
+
+#     - name: Install Grafana via apt
+#       become: true
+#       apt_repository:
+#         repo: "deb https://packages.grafana.com/oss/deb stable main"
+#         state: present
+#         update_cache: yes
+
+#     - name: Install Grafana via apt
+#       apt:
+#         name: grafana
+#         state: present
+
+#     - name: Create Grafana service file
+#       template:
+#         src: config_files/grafana.service.j2
+#         dest: /etc/systemd/system/grafana.service
+
+#     - name: Reload Systemd daemon
+#       systemd:
+#         daemon_reload: yes
+
+#     - name: Enable and start Grafana service
+#       systemd:
+#         name: grafana
+#         state: started
+#         enabled: yes
+
+#     - name: Enable and start Prometheus service
+#       systemd:
+#         name: prometheus
+#         state: started
+#         enabled: yes
