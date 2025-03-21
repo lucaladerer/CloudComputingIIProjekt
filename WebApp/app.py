@@ -13,12 +13,22 @@ if not db_password:
 else:
     print("Successfully received .env for DB_PASSWORD")
 
+
 uri = f"mongodb+srv://lucaladerer:{db_password}@ccii.yu2co.mongodb.net/?retryWrites=true&w=majority&appName=CCII"
 client = MongoClient(uri, server_api=ServerApi('1'))
 db = client["CCII"]
-collection = db["Jokes"] 
 
-# db = g._database = PyMongo(current_app).db
+
+collection_name = os.getenv("COLLECTION")
+if not collection_name:
+    raise ValueError("COLLECTION ist nicht gesetzt!")
+else:
+    print("Successfully received .env for COLLECTION")
+
+collection = db[collection_name] 
+
+counters = os.getenv("COUNTERS_COLLECTION")
+
 
 @app.route('/')
 def index():
@@ -32,7 +42,7 @@ def ranking():
 def get_jokes():
     # jokes = list(db.jokes.find())  # Alle Einträge abrufen (ohne MongoDB-ID)
     jokes = list(collection.find({}))  # Alle Einträge abrufen (ohne MongoDB-ID)
-    totalRatings = list(db["counters"].find())
+    totalRatings = list(db[counters].find())
     # print("Fetched jokes: " + str(jokes))
     for joke in jokes:
         joke["_id"] = str(joke["_id"])
@@ -55,7 +65,7 @@ def add_joke():
     # if not db.counters.find_one({'_id': 'totalRatings'}):
     #     db.counters.insert_one({'_id': 'totalRatings', 'count': 21})
     # else:
-    db["counters"].update_one({'_id': 'totalRatings'}, {'$inc': {'count': 1}})
+    db[counters].update_one({'_id': 'totalRatings'}, {'$inc': {'count': 1}})
     # db.counters.update_one({'_id': 'totalRatings'}, {'$inc': {'count': 1}})
 
 
