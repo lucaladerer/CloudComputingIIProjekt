@@ -5,13 +5,15 @@ var settings = {
     "timeout": 0,
   };
 
+// disable Loading button
 function disableButton() {
-  $("#loadJoke").prop('disabled', true);
+  $("#loadJoke").prop("disabled", true);
   console.log("Button disabled");
 }
 
+// enable Loading button
 function enableButton() {
-  $("#loadJoke").prop('disabled', false);
+  $("#loadJoke").prop("disabled", false);
   console.log("Button enabled");
 }
 
@@ -20,13 +22,13 @@ function enableButton() {
 function checkForExistingJoke(setup, punchline) {
   let existingJoke;
   $.ajax({
-    url: '/readJokes', // example json
-    dataType: 'json',
+    url: "/readJokes",
+    dataType: "json",
     success: function(jokes) {
       existingJoke = jokes.find(j => j.text === (setup + " - " + punchline));
     },
     error: function(err) {
-      console.error("Fehler beim Laden: ", err);
+      console.error("Error while loading: ", err);
     }
   });
   return existingJoke;
@@ -39,31 +41,34 @@ $("#submitJokeRanking").click(function(){
   const setup = $("#jokeSetup").text();
   const punchline = $("#jokePunchline").text();
   if((typeof(ranking) != "undefined") && (punchline != "")) {
-    console.log('submitted Ranking: ' + ranking);
+    console.log("Submitted Ranking: " + ranking);
 
     let existingJoke = checkForExistingJoke(setup, punchline);
 
     let submitJoke = [];
 
+    // check if joke already exists
     if (existingJoke) {
-      let ratingKey = `numOf${ranking}Stars`;
+      let ratingKey = "numOf${ranking}Stars";
       existingJoke[ratingKey] = (parseInt(existingJoke[ratingKey]) || 0) + 1;
       submitJoke = existingJoke;
     } else {
+      // create new joke object
       let newJoke = {
-        "text": setup + ' - ' + punchline,
+        "text": setup + " - " + punchline,
         "numOf1Stars": "0",
         "numOf2Stars": "0",
         "numOf3Stars": "0",
         "numOf4Stars": "0",
         "numOf5Stars": "0"
       };
-      let ratingKey = `numOf${ranking}Stars`;
+      let ratingKey = "numOf${ranking}Stars";
       newJoke[ratingKey] = "1";
       
       submitJoke = newJoke;
     }
 
+    // addJoke route
     $.ajax({
       url: "/addJoke",
       type: "POST",
@@ -73,7 +78,7 @@ $("#submitJokeRanking").click(function(){
           alert(response.message);
       },
       error: function(err) {
-        console.error("Fehler beim Laden: ", err);
+        console.error("Error while loading: ", err);
       }
     });
   } else {
@@ -84,28 +89,27 @@ $("#submitJokeRanking").click(function(){
 })
 
 
-// star display
-const stars = document.querySelectorAll('#starRating .star');
-const ratingDisplay = document.getElementById('ratingDisplay');
+// display stars
+const stars = document.querySelectorAll("#starRating .star");
+const ratingDisplay = document.getElementById("ratingDisplay");
 
 stars.forEach(star => {
-  star.addEventListener('click', () => {
-    const rating = parseInt(star.getAttribute('data-value'));
+  star.addEventListener("click", () => {
+    const rating = parseInt(star.getAttribute("data-value"));
     updateStars(rating);
-    ratingDisplay.textContent = 'Chosen stars: ' + rating;
+    ratingDisplay.textContent = "Chosen stars: " + rating;
   });
 });
 
 function updateStars(rating) {
   stars.forEach(star => {
-    const starValue = parseInt(star.getAttribute('data-value'));
-    if (starValue <= rating) {
-      // whole star
-      star.classList.remove('bi-star');
-      star.classList.add('bi-star-fill');
+    const starValue = parseInt(star.getAttribute("data-value"));
+    if (starValue <= rating) {  // whole star
+      star.classList.remove("bi-star");
+      star.classList.add("bi-star-fill");
     } else { // outline star
-      star.classList.remove('bi-star-fill');
-      star.classList.add('bi-star');
+      star.classList.remove("bi-star-fill");
+      star.classList.add("bi-star");
     }
   });
   $("#starRating").attr("ranking", rating);
@@ -114,15 +118,14 @@ function updateStars(rating) {
 
 // create table when DOM is ready
 $(document).ready(function() {
-  const table = $('#jokesTable').DataTable({
-    // pageLength: 10,
-    order: [[2, 'desc']],
+  const table = $("#jokesTable").DataTable({
+    order: [[2, "desc"]],
     paging: false,
     columnDefs: [
       {
         targets: 0,
         orderable: false,
-        render: function(data, type, row, meta) {
+        render: function(_, __, ___, meta) {
           return meta.row + meta.settings._iDisplayStart + 1;
         }
       }
@@ -131,13 +134,11 @@ $(document).ready(function() {
 
   // ajax call for database (read)
   $.ajax({
-    url: '/readJokes', // example json
-    dataType: 'json',
+    url: "/readJokes",
+    dataType: "json",
     success: function(jokes) {
       jokes.forEach(function(joke) {
-        // console.log(joke)
         if (!(Array.isArray(joke))) {
-          // console.log("Objekt");
           var total = Number(joke.numOf1Stars) +
                       Number(joke.numOf2Stars) +
                       Number(joke.numOf3Stars) +
@@ -170,13 +171,14 @@ $(document).ready(function() {
 
       let realNumbers = 0;
 
-      $('#jokesTable tbody tr').each(function(index) {
-        $(this).find('td:first').text(index + 1); // Replace first column with row number
+      $("#jokesTable tbody tr").each(function(index) {
+        // Replace first column with row number
+        $(this).find("td:first").text(index + 1); 
         $(this).text = realNumbers;
       });
     },
     error: function(err) {
-      console.error("Fehler beim Laden: ", err);
+      console.error("Error while loading: ", err);
     }
   });
   
@@ -184,7 +186,7 @@ $(document).ready(function() {
   // get a new joke
   $("#loadJoke").click(function(){
     disableButton();
-    console.log('clicked button');
+    console.log("clicked button");
 
     $.ajax(settings).done(function (response) {
       console.log(response);

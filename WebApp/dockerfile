@@ -1,25 +1,32 @@
-# Verwende ein Python 3.11-Image als Basis
+# Python 3.11-Image as base
 FROM python:3.11-slim
 
-# Setze das Arbeitsverzeichnis im Container
-# WORKDIR /app
+# this part is used for uWSGI to work properly
+RUN apt-get update && apt-get install -y \
+    gcc \
+    build-essential \
+    python3-dev \
+    libpcre3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Kopiere die restlichen Dateien in das Arbeitsverzeichnis
+# Copy requirements
 COPY requirements.txt requirements.txt
 
-# Installiere requirements
+# Install requirements
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 COPY . .
 
-# Setze die Umgebungsvariable für den Flask-Server
+# Set environment variable for flask app
 ENV FLASK_APP=app.py
 
-# Setze den Port, auf dem der Flask-Server laufen soll
+# Expose port where flask runs
 EXPOSE 5000
 
-# Starte den Flask-Server beim Starten des Containers
-CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]
+# Start flask server on 0.0.0.0 when starting the container
+# Standard flask run
+# CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]
 
-# run: docker run -d web_app  OR  docker run -d -p 5000:5000 web_app
+# uWSGI command
+CMD ["uwsgi", "--http", "0.0.0.0:5000", "--master", "-p", "4", "-w", "app:app"]

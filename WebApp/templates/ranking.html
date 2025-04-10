@@ -12,39 +12,38 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <header class="d-flex sticky-top justify-content-center py-3">
-          <ul class="nav nav-pills">
-            <li class="nav-item"><a href="{{ url_for('index') }}" class="nav-link text-secondary">Home</a></li>
-            <li class="nav-item"><a href="{{ url_for('ranking') }}" class="nav-link active" aria-current="page">Ranking</a></li>
-          </ul>
-        </header>
-      </div>
-      
-    <div class="container-fluid justify-content-center">
-      <div class="container my-4" style="margin: 50px;">
-        <div class="container-fluid d-flex justify-content-between align-items-center">
-          <h1>Ranking</h1>
-          <div>
-            <h1>Total Votes: </h1>
-            <h1 id="totalVotes" style="text-decoration: underline; text-align: right;"></h1>
-          </div>
-        </div>
-        <table class="table table-striped" id="jokesTable" data-pagination="false">
-          <thead>
-            <tr>
-              <th style="width: 5%;">Place</th>
-              <th style="width: 90%;">Joke</th>
-              <th style="width: 5%;">Average Rating</th>
-            </tr>
-          </thead>
-          <tbody>
-          </tbody>
-        </table>
-      </div>
+  <div class="container">
+    <header class="d-flex sticky-top justify-content-center py-3">
+      <ul class="nav nav-pills">
+        <li class="nav-item"><a href="{{ url_for('index') }}" class="nav-link text-secondary">Home</a></li>
+        <li class="nav-item"><a href="{{ url_for('ranking') }}" class="nav-link active" aria-current="page">Ranking</a></li>
+      </ul>
+    </header>
+  </div>
     
+  <div class="container-fluid justify-content-center">
+    <div class="container my-4" style="margin: 50px;">
+      <div class="container-fluid d-flex justify-content-between align-items-center">
+        <h1>Ranking</h1>
+        <div>
+          <h1>Total Votes: </h1>
+          <h1 id="totalVotes" style="text-decoration: underline; text-align: right;"></h1>
+        </div>
       </div>
-      <script src="{{ url_for('static', filename='script.js') }}"></script>
+      <table class="table table-striped" id="jokesTable" data-pagination="false">
+        <thead>
+          <tr>
+            <th style="width: 5%;">Place</th>
+            <th style="width: 90%;">Joke</th>
+            <th style="width: 5%;">Average Rating</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 <footer></footer>
 </html>
