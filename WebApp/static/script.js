@@ -1,5 +1,5 @@
 // api settings
-var settings = {
+const settings = {
     "url": "https://official-joke-api.appspot.com/random_joke",
     "method": "GET",
     "timeout": 0,
@@ -8,30 +8,30 @@ var settings = {
 // disable Loading button
 function disableButton() {
   $("#loadJoke").prop("disabled", true);
-  console.log("Button disabled");
 }
 
 // enable Loading button
 function enableButton() {
   $("#loadJoke").prop("disabled", false);
-  console.log("Button enabled");
 }
 
 
 // check if joke already in db
 function checkForExistingJoke(setup, punchline) {
-  let existingJoke;
-  $.ajax({
-    url: "/readJokes",
-    dataType: "json",
-    success: function(jokes) {
-      existingJoke = jokes.find(j => j.text === (setup + " - " + punchline));
-    },
-    error: function(err) {
-      console.error("Error while loading: ", err);
-    }
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url: "/readJokes",
+      dataType: "json",
+      success: function (jokes) {
+        const existingJoke = jokes.find(j => j.text === (setup + " - " + punchline));
+        resolve(existingJoke);
+      },
+      error: function (err) {
+        console.error("Error while loading: ", err);
+        reject(err);
+      },
+    });
   });
-  return existingJoke;
 }
 
 
@@ -40,68 +40,61 @@ $("#submitJokeRanking").click(function(){
   const ranking =  $("#starRating").attr("ranking");
   const setup = $("#jokeSetup").text();
   const punchline = $("#jokePunchline").text();
-  if((typeof(ranking) != "undefined") && (punchline != "")) {
-    console.log("Submitted Ranking: " + ranking);
+  
+  try {
+    if((typeof(ranking) != "undefined") && (punchline != "")) {
+      console.log("Submitted Ranking: " + ranking);
 
-    let existingJoke = checkForExistingJoke(setup, punchline);
+      const existingJoke = checkForExistingJoke(setup, punchline);
 
-    let submitJoke = [];
+      var submitJoke = [];
 
-    // check if joke already exists
-    if (existingJoke) {
-      let ratingKey = "numOf${ranking}Stars";
-      existingJoke[ratingKey] = (parseInt(existingJoke[ratingKey]) || 0) + 1;
-      submitJoke = existingJoke;
-    } else {
-      // create new joke object
-      let newJoke = {
-        "text": setup + " - " + punchline,
-        "numOf1Stars": "0",
-        "numOf2Stars": "0",
-        "numOf3Stars": "0",
-        "numOf4Stars": "0",
-        "numOf5Stars": "0"
-      };
-      let ratingKey = "numOf${ranking}Stars";
-      newJoke[ratingKey] = "1";
-      
-      submitJoke = newJoke;
-    }
-
-    // addJoke route
-    $.ajax({
-      url: "/addJoke",
-      type: "POST",
-      contentType: "application/json",
-      data: JSON.stringify({submitJoke}),
-      success: function (response) {
-          alert(response.message);
-      },
-      error: function(err) {
-        console.error("Error while loading: ", err);
+      // check if joke already exists
+      if (existingJoke) {
+        var ratingKey = "numOf${ranking}Stars";
+        existingJoke[ratingKey] = (parseInt(existingJoke[ratingKey]) || 0) + 1;
+        submitJoke = existingJoke;
+      } else {
+        // create new joke object
+        const newJoke = {
+          text: setup + " - " + punchline,
+          numOf1Stars: "0",
+          numOf2Stars: "0",
+          numOf3Stars: "0",
+          numOf4Stars: "0",
+          numOf5Stars: "0"
+        };
+        const ratingKey = "numOf${ranking}Stars";
+        newJoke[ratingKey] = "1";
+        
+        submitJoke = newJoke;
       }
-    });
-  } else {
-    console.log(ranking)
-    console.log(punchline);
-    alert("No Rating submitted, please wait for the punchline and rate the joke before submitting.")
+
+      // addJoke route
+      $.ajax({
+        url: "/addJoke",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({submitJoke}),
+        success: function (response) {
+            alert(response.message);
+        },
+        error: function(err) {
+          console.error("Error while loading: ", err);
+        }
+      });
+    } else {
+      alert("No Rating submitted, please wait for the punchline and rate the joke before submitting.")
+    }
+  } catch (err) {
+    console.error("Error: ", err);
   }
 })
 
 
 // display stars
-const stars = document.querySelectorAll("#starRating .star");
-const ratingDisplay = document.getElementById("ratingDisplay");
-
-stars.forEach(star => {
-  star.addEventListener("click", () => {
-    const rating = parseInt(star.getAttribute("data-value"));
-    updateStars(rating);
-    ratingDisplay.textContent = "Chosen stars: " + rating;
-  });
-});
-
 function updateStars(rating) {
+  const stars = document.querySelectorAll("#starRating .star");
   stars.forEach(star => {
     const starValue = parseInt(star.getAttribute("data-value"));
     if (starValue <= rating) {  // whole star
@@ -113,7 +106,16 @@ function updateStars(rating) {
     }
   });
   $("#starRating").attr("ranking", rating);
+  $("#ratingDisplay").text(`Chosen stars: ${rating}`);
 }
+
+
+document.querySelectorAll("#starRating .star").forEach(star => {
+  star.addEventListener("click", () => {
+    const rating = parseInt(star.getAttribute("data-value"));
+    updateStars(rating);
+  });
+});
 
 
 // create table when DOM is ready
@@ -139,7 +141,7 @@ $(document).ready(function() {
     success: function(jokes) {
       jokes.forEach(function(joke) {
         if (!(Array.isArray(joke))) {
-          var total = Number(joke.numOf1Stars) +
+          const total = Number(joke.numOf1Stars) +
                       Number(joke.numOf2Stars) +
                       Number(joke.numOf3Stars) +
                       Number(joke.numOf4Stars) +
@@ -162,14 +164,12 @@ $(document).ready(function() {
           ]);
         }
         else {
-          console.log("Array");
-          console.log(joke[0].count);
           $("#totalVotes").text(joke[0].count);
         }
       });
       table.draw();
 
-      let realNumbers = 0;
+      var realNumbers = 0;
 
       $("#jokesTable tbody tr").each(function(index) {
         // Replace first column with row number
@@ -186,12 +186,9 @@ $(document).ready(function() {
   // get a new joke
   $("#loadJoke").click(function(){
     disableButton();
-    console.log("clicked button");
 
     $.ajax(settings).done(function (response) {
-      console.log(response);
       $("#jokeSetup").text(response.setup);
-      
       setTimeout(function() {
         $("#jokePunchline").text(response.punchline);
         enableButton();

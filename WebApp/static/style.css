@@ -1,8 +1,10 @@
+/* table position */
 .table {
     position: relative;
     width: 90vw;
 }
 
+/* emphasize first 3 rows in medal colors */
 #jokesTable tbody tr:first-child td {
     background-color: gold !important;
     color: black;
@@ -18,11 +20,13 @@
     color: black;
 }
 
+/* center and bold the ranking number */
 #jokesTable tbody td:nth-child(1) {
     font-weight: bolder;
     text-align: center;
 }
 
+/* center the average ranking */
 #jokesTable tbody td:nth-child(3) {
     text-align: center;
 }

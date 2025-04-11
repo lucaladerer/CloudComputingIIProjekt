@@ -61,6 +61,12 @@ resource "azurerm_network_security_group" "nsg" {
   resource_group_name = azurerm_resource_group.rg.name
 }
 
+# Connect nsg and nic
+resource "azurerm_network_interface_security_group_association" "connect_nic_nsg" {
+  network_interface_id      = azurerm_network_interface.nic.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
+}
+
 # Open port 5000 for flask
 resource "azurerm_network_security_rule" "allow_flask" {
   name                        = "allow_flask"

@@ -24,9 +24,5 @@ ENV FLASK_APP=app.py
 # Expose port where flask runs
 EXPOSE 5000
 
-# Start flask server on 0.0.0.0 when starting the container
-# Standard flask run
-# CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]
-
-# uWSGI command
+# uWSGI command to run the app
 CMD ["uwsgi", "--http", "0.0.0.0:5000", "--master", "-p", "4", "-w", "app:app"]
