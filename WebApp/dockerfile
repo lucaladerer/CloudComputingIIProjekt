@@ -25,4 +25,4 @@ ENV FLASK_APP=app.py
 EXPOSE 5000
 
 # uWSGI command to run the app
-CMD ["uwsgi", "--http", "0.0.0.0:5000", "--master", "-p", "4", "-w", "app:app"]
+CMD ["uwsgi", "--http", "0.0.0.0:5000", "--master", "-p", "4", "--enable-threads", "--lazy-apps", "-w", "wsgi:app"]

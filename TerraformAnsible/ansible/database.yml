@@ -1,0 +1,49 @@
+- name: Configure database
+  hosts: rh01
+  become: yes
+  vars_files:
+    - secrets.yml
+  tasks:
+    - name: Configurate unrestricted access in Atlas (Whitelist 0.0.0.0/0)
+      uri:
+        url: "https://cloud.mongodb.com/api/atlas/v1.0/groups/{{ ATLAS_PROJECT_ID }}/accessList"
+        method: POST
+        user: "{{ ATLAS_PUBLIC_KEY }}"
+        password: "{{ ATLAS_PRIVATE_KEY }}"
+        force_basic_auth: no
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body: >
+          [
+            {
+              "ipAddress": "0.0.0.0/0",
+              "comment": "Allow all access"
+            }
+          ]
+        status_code: 201
+
+    - name: Create collection in database "CCII"
+      shell: |
+        python3 - <<'EOF'
+        import os
+        from pymongo import MongoClient
+
+        uri = f"mongodb+srv://lucaladerer:{{ DB_PASSWORD }}@{{ CLUSTER_NAME | lower }}.yu2co.mongodb.net/?retryWrites=true&w=majority&appName={{ CLUSTER_NAME}}"
+        client = MongoClient(uri)
+        db = client["{{ CLUSTER_NAME }}"]
+
+        if "Jokes_{{ ansible_host }}" not in db.list_collection_names():
+            db.create_collection("Jokes_{{ ansible_host }}")
+            db.create_collection("counters_{{ ansible_host }}")
+            
+            collection = db["counters_{{ ansible_host }}"]
+            collection.insert_one({"_id": "totalRatings", "count": 0})
+            print("Collection 'Jokes_{{ ansible_host }}' und 'counters_{{ ansible_host }}' wurde erstellt.")
+        else:
+            print("Collection 'Jokes_{{ ansible_host }}' existiert bereits.")
+
+        client.close()
+        EOF
+      args:
+        executable: /bin/bash

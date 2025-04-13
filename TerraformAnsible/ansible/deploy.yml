@@ -1,0 +1,22 @@
+- name: Start docker and print IP - deploy
+  hosts: rh01
+  become: yes
+  vars_files:
+    - secrets.yml
+  tasks:
+    - name: Start Docker container with flask app
+      community.docker.docker_container:
+        name: web_app
+        image: lucaladerer/web_app:latest
+        pull: 1
+        state: started
+        ports:
+          - "5000:5000"
+        env:
+          DB_PASSWORD: "{{ DB_PASSWORD }}"
+          COLLECTION: Jokes_{{ ansible_host }}
+          COUNTERS_COLLECTION: counters_{{ ansible_host }}
+
+    - name: Print IP and port
+      ansible.builtin.debug:
+        msg: "Copy the following address into your browser to access the app: {{ ansible_host }}:5000"

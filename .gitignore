@@ -3,3 +3,6 @@
 terraform.tfstate
 terraform.tfstate.backup
 .vscode
+.pytest_cache
+.terraform/
+__pycache__
