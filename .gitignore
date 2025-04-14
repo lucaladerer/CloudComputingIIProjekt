@@ -5,4 +5,5 @@ terraform.tfstate.backup
 .vscode
 .pytest_cache
 .terraform/
-__pycache__
+__pycache__/
+inventori.ini
