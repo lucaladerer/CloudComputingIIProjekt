@@ -23,7 +23,7 @@
           ]
         status_code: 201
 
-    - name: Create collection in database "CCII"
+    - name: Create collection in database cluster "CCII"
       shell: |
         python3 - <<'EOF'
         import os

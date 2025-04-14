@@ -19,4 +19,4 @@
 
     - name: Print IP and port
       ansible.builtin.debug:
-        msg: "Copy the following address into your browser to access the app: {{ ansible_host }}:5000"
+        msg: "Copy the following address into your browser to access the app: http://{{ ansible_host }}:5000"
